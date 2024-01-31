@@ -1,3 +1,5 @@
 Qiita-CLIについて
 https://github.com/increments/qiita-cli
 
+MarkDown記法のチートシート
+https://qiita.com/Qiita/items/c686397e4a0f4f11683d
