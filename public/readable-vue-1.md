@@ -1,5 +1,5 @@
 ---
-title: 「あなたのVueファイルは読みづらい」と文句を言われたくない①
+title: 「あなたのVueファイルは読みづらい」と文句を言われたくない① -- 記述方法編 --
 tags:
   - Vue
   - JavaScript
@@ -50,10 +50,28 @@ ignorePublish: false
 
 # 2. サンプルコード
 サンプルコードについて、事前に少しだけ解説を入れておきます。
+記述する際に意識していることですが、
+* 順序を分かりやすく = 乱雑に並べない
+    * import順序
+    * 関数の並べる順序 など
+* 初見さんが理解しやすく = アロー関数内の処理を簡潔にする
+    * 別関数に分離する など
+* 処理内容を理解しやすく = 処理ごとに記述をまとめる
+    * 機能ごとにコメントを書く
+    * 改行を上手く使う
+
+の３つです。
+この辺りを認識していただいた上で、サンプルコードや実装ポイントをご覧になってくださればと思っています。
+
+(注) 説明の関係上、無理矢理な部分(別関数への分離の部分など)があります。その点ご理解いただければと思います。
 
 ```vue:App.vue (ts)
 <script setup lang="ts">
 import { ref } from 'vue';
+
+/**
+ * HOME画面('/')
+ */
 
 interface ShoppingItem {
     id: number;
@@ -66,10 +84,12 @@ const shoppingList = ref<ShoppingItem[]>([
     { id: 1, name: '', price: 0, count: 0 },
 ]);
 
+// 登録されている商品を削除する
 const deleteShoppingItem = (id: number) => {
     shoppingList.value = shoppingList.value.filter((item) => item.id !== id);
 };
 
+// 新規商品を追加する
 const addShoppingItem = () => {
     shoppingList.value.push({
         id: getNewShoppingItemId(),
@@ -79,25 +99,28 @@ const addShoppingItem = () => {
     });
 };
 
+// 合計金額を計算する
 const totalPrice = ref(0);
 const isCalcFinished = ref(false);
-
 const calcTotalPrice = () => {
     totalPrice.value = getTotalPrice(shoppingList.value);
     isCalcFinished.value = true;
 };
 
+// 画面上の入力を全てリセットする
 const resetAll = () => {
     shoppingList.value = [{ id: 1, name: '', price: 0, count: 0 }];
     totalPrice.value = 0;
     isCalcFinished.value = false;
 };
 
+// 新規商品を追加する際、IDの重複を防ぐための関数
 function getNewShoppingItemId() {
     const lastIndex = shoppingList.value.length - 1;
     return lastIndex < 0 ? 1 : shoppingList.value[lastIndex].id + 1;
 }
 
+// 合計金額を計算する関数
 function getTotalPrice(list: ShoppingItem[]): number {
     let totalPrice = 0;
     list.forEach((item) => {
@@ -152,14 +175,20 @@ function getTotalPrice(list: ShoppingItem[]): number {
 <script setup>
 import { ref } from 'vue';
 
+/**
+ * HOME画面('/')
+ */
+
 const shoppingList = ref([
     { id: 1, name: '', price: 0, count: 0 },
 ]);
 
-const deleteShoppingItem = (id) => {
+// 登録されている商品を削除する
+const deleteShoppingItem = () => {
     shoppingList.value = shoppingList.value.filter((item) => item.id !== id);
 };
 
+// 新規商品を追加する
 const addShoppingItem = () => {
     shoppingList.value.push({
         id: getNewShoppingItemId(),
@@ -169,26 +198,29 @@ const addShoppingItem = () => {
     });
 };
 
+// 合計金額を計算する
 const totalPrice = ref(0);
 const isCalcFinished = ref(false);
-
 const calcTotalPrice = () => {
     totalPrice.value = getTotalPrice(shoppingList.value);
     isCalcFinished.value = true;
 };
 
+// 画面上の入力を全てリセットする
 const resetAll = () => {
     shoppingList.value = [{ id: 1, name: '', price: 0, count: 0 }];
     totalPrice.value = 0;
     isCalcFinished.value = false;
 };
 
+// 新規商品を追加する際、IDの重複を防ぐための関数
 function getNewShoppingItemId() {
     const lastIndex = shoppingList.value.length - 1;
     return lastIndex < 0 ? 1 : shoppingList.value[lastIndex].id + 1;
 }
 
-function getTotalPrice(list){
+// 合計金額を計算する関数
+function getTotalPrice() {
     let totalPrice = 0;
     list.forEach((item) => {
         totalPrice += item.price * item.count;
@@ -242,7 +274,15 @@ function getTotalPrice(list){
 ではここから、一つずつポイントを紹介していきます。
 サンプルコードを参照しながら追っていくと分かりやすいと思います。
 ## 3-1. ファイルの説明をjsdoc記法で書いておく
-
+記入が不要なファイルもあると思いますが、できるだけ記入しておいた方が良いかなと思っています。特に値を受け取るコンポーネントの場合は記入しておいた方が、使い方などをひと目で理解できるというメリットがあります。
+詳しい書き方は、公式ドキュメントを参照してください。
+```vue:jsdoc
+<script setup>
+/**
+ * ここに説明
+ */
+</script>
+```
 
 ## 3-2. `<script setup>`を使用する
 
@@ -360,12 +400,45 @@ const test = ref(testContentList.value[0]);
 
 基本的には、templateタグ内の順番に合わせて記述していくようにしましょう。
 
+### 関数
+サンプルコードを見てもらうと分かる通り、scriptタグ内でのアロー関数の定義の順番は、
+1. 商品の削除ボタン
+2. 新規商品の追加ボタン
+3. 合計金額計算ボタン
+4. リセットボタン
+
+となっています。これはtemplateタグ内で出てくる順番に記述しています。
+
+### ref 定義の位置
+配置位置については２種類あります。
+* ページ全体で使用する変数
+    * サンプルコードでいう`shoppingList`
+    * 定義位置は`define系`や`interface系`の直下
+* 一部の処理に紐づいて使用する変数
+    * サンプルコードでいう`totalPrice, isCalcFinished`
+    * 配置位置は各処理をする関数の直前
+
 ## 3-9. 属性の書く順番
+今回は煩雑さを省くために使用していませんが、`Tailwind`のようなCSSフレームワークを使用すると、以下のようにタグの属性が長くなってしまうことがあります。
+```vue:属性の書き方(良い例)
+<button type="button" @click="clickedUpdateButton" class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+    更新
+</button>
+```
+```vue:属性の書き方(悪い例)
+<button type="button" class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" @click="clickedUpdateButton">
+    更新
+</button>
+```
+見比べてみてもらうと分かる通り、圧倒的に前者の方がコードが見やすいですよね。
+このボタンが押されるとどんな処理が走るのだろうかと見てみようとしても、わざわざ右にスクロールしていかないと関数名等を見ることはできません。
 
+書く順番は人それぞれですが、例えばですけど僕の場合は
+1. タグの性質を決める属性
+2. タグの動作を決める属性
+3. その他
 
-
-
-
+とにかく、動作面に関する属性を先に書こうというスタンスです。
 ## 3-10. ２つの関数
 今回のサンプルコードでは２種類の関数を使用しています。
 * アロー関数 
@@ -388,10 +461,11 @@ function name() {
 ```
 * 値の変更や加工に関する処理をまとめる
 * scriptタグの一番下の`function`郡の中に記述する
-* 主にscriptタグ内から呼び出して使う
+* 主にscriptタグ内で呼び出して使う
+* **関数外の変数の値を変更しない**
 
 アロー関数だけで十分なのでは？と思われる方が多いと思うのですが、わざわざ使用している理由は以下の通りです。
-* 定義場所について、使用したい箇所よりも後(下)に関数の定義をすることができる
+* 定義場所について、使用したい箇所よりも後(下)に関数の定義をすることができるため、scriptタグ内の最下部に配置することができ、コードの見通しが良くなる
 * 値の変更や加工はデータフローを理解するのにそれほど重要ではない
 
 今回のサンプルコードの場合、どのように値が変更・加工されるのかに関する構文を`function`で分離し、データフローの理解の手助けをするために、処理内容が分かるような関数の名前を付けています。
@@ -400,10 +474,14 @@ function name() {
 
 これぐらい簡易的なコードであれば恩恵はあまり感じないと思いますが、コードが肥大化していくほど恩恵を感じていくのではないかと思っています。
 
-## 3-11. 変数、関数の命名規則
-
 # 4. 後書き
 
 ## コードの品質の重要性
+チーム開発においてコードの品質を高く保つためには、
+* コーディングルールを徹底する
+* 可読性を上げるような工夫をする
 
-## CSSについて
+この２点が最重要だと思います。正直この辺りが疎かになると、たとえ２人の開発でもごちゃごちゃになります。さらに人が増えるとなると尚更です。こういったルールを身体に染み込ませることにもある程度の工数は掛かってしまいますが、その後の保守のことを考えるとプラスの要素しかないですよね。
+少しだけコーディングルールを見直してみてはいかがでしょうか。
+
+コーディングを快適にするためのルール作りにこの記事の内容が参考になっていることを切に願っています。
